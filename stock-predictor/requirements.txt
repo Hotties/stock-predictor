@@ -1,0 +1,20 @@
+# # M0 점검에서 확인한 버전은 고정하고, 나머지는 범위로 둔다.
+# FinanceDataReader==0.9.202
+# exchange_calendars==4.13.2
+# pandas>=3.0,<4
+# numpy>=2.0
+# SQLAlchemy>=2.0,<3
+# PyMySQL>=1.1
+# # M3에서 사용
+# # fastapi
+# # uvicorn
+
+finance-datareader==0.9.202
+exchange_calendars==4.13.2
+pandas>=3.0,<4
+numpy>=2.0
+SQLAlchemy>=2.0,<3
+PyMySQL>=1.1
+# M3에서 사용
+# fastapi
+# uvicorn

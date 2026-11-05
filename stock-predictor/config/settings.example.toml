@@ -1,0 +1,43 @@
+# 설정 양식. 복사해서 config/settings.toml로 쓰고, DB 비밀번호는 파일에 쓰지 않고
+# 환경변수 STOCK_DB_PASSWORD로 넘긴다. (제안서 9번의 추천안 B를 따름)
+
+[database]
+host = "127.0.0.1"
+port = 3306
+user = "stock"
+name = "stockdb"
+
+# 점수 산식 상수 (M0에서 시드 100종목의 점수 분포로 확정, 「점수 산식 상수 확정 기록」 참고)
+[scoring]
+ma_k = 1.5
+market_div = 2.7
+us_div = 2.5
+volume_ln_base = 4.0
+sigma_window = 60
+volume_avg_window = 20
+
+[history]
+load_trading_days = 870    # 이평선 준비 120 + 학습 500 + 검증 약 250
+train_days = 500
+validate_days = 250
+
+[collector]
+sleep_seconds = 0.3        # 종목 사이 대기
+max_retries = 3
+retry_wait_seconds = 1.0
+
+[schedule]
+close_confirm_time = "16:30"       # 이 시각 이후 당일 일봉을 확정으로 본다
+prediction_open_time = "07:00"     # 미국 마감 뒤 예측이 열리는 시각
+
+[seed]
+kospi_count = 70
+kosdaq_count = 30
+
+[paths]
+extra_holidays = "config/extra_holidays.csv"
+backup_dir = "backup"
+backup_keep_days = 7
+
+[runtime]
+stale_run_hours = 6        # 이 시간이 지나도록 running이면 비정상 종료로 본다
