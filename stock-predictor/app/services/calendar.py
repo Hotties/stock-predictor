@@ -210,6 +210,18 @@ class TradingCalendar:
             raise CalendarRangeError(f"{target} 이전의 미국 거래일이 달력 범위 안에 없습니다")
         return self._us[i]
 
+    def latest_us_session_confirmed(self, now: datetime) -> date:
+        """지금 시각에 종가가 확정된 가장 최근 미국 거래일.
+
+        미국 세션 U의 종가는 U 다음 날 prediction_open_time(07:00 KST)에 확정된 것으로 본다.
+        진행 중인 세션의 장중 값이 일봉으로 섞이는 것을 막는 데 쓴다.
+        """
+        now = _naive_kst(now)
+        candidate = self.latest_us_session_before(now.date() + timedelta(days=1))   # 오늘 이하의 가장 최근 세션
+        while datetime.combine(candidate + timedelta(days=1), self.prediction_open_time) > now:
+            candidate = self.latest_us_session_before(candidate)
+        return candidate
+
     # ---- 예측 가능 구간
     def prediction_window(self, target: date) -> PredictionWindow:
         if not self.is_trading_day(target):

@@ -125,6 +125,26 @@ class UsSessionTest(unittest.TestCase):
         self.assertEqual(c.latest_us_session_before(date(2026, 10, 31)), date(2026, 10, 30))  # 토요일 날짜도 가능
 
 
+class UsConfirmedTest(unittest.TestCase):
+    def setUp(self):
+        self.cal = make()   # 미국 휴장: 2026-11-04(수)
+
+    def test_confirmed_after_seven_next_morning(self):
+        c = self.cal
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 11, 3, 12, 0)), date(2026, 11, 2))   # 화 낮: 월 세션 확정
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 11, 3, 23, 0)), date(2026, 11, 2))   # 화 밤: 화 세션은 진행 중
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 11, 4, 6, 59)), date(2026, 11, 2))
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 11, 4, 7, 0)), date(2026, 11, 3))    # 수 07:00: 화 세션 확정
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 11, 5, 8, 0)), date(2026, 11, 3))    # 수는 미국 휴장
+
+    def test_weekend(self):
+        c = self.cal
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 10, 30, 20, 0)), date(2026, 10, 29))  # 금 저녁
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 10, 31, 6, 0)), date(2026, 10, 29))   # 토 새벽
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 10, 31, 8, 0)), date(2026, 10, 30))   # 토 07:00 이후
+        self.assertEqual(c.latest_us_session_confirmed(dt(2026, 11, 2, 8, 0)), date(2026, 10, 30))
+
+
 class PredictionWindowTest(unittest.TestCase):
     def setUp(self):
         self.cal = make()

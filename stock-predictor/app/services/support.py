@@ -31,6 +31,7 @@ class Reason(str, Enum):
     NEW_LISTING = "new_listing"                 # 일봉 121거래일 미만
     SUSPENDED = "suspended"                     # 최근 거래일에 거래 없음
     NO_DATA = "no_data"                         # 일봉을 받지 못함
+    EXCLUDED = "excluded"                       # 제외 상태이지만 사유는 모를 때(종목 목록 정보가 없는 경우)
 
 
 @dataclass(frozen=True)
@@ -150,3 +151,8 @@ def static_support_table(master: pd.DataFrame, delisted_codes: Iterable[str] = (
         d = judge_by_master(rec, delisted_codes=delisted)
         rows.append({"code": rec["code"], "supported": d.supported, "reason": d.reason.value, "message": d.message})
     return pd.DataFrame(rows, columns=["code", "supported", "reason", "message"])
+
+
+def generic_excluded() -> SupportDecision:
+    """제외된 종목인데 종목 목록 정보가 없어 사유를 알 수 없을 때의 안내."""
+    return SupportDecision(False, Reason.EXCLUDED, "지원하지 않는 종목입니다", "사유 미상")
