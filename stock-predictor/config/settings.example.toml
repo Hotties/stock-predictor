@@ -4,7 +4,7 @@
 [database]
 host = "127.0.0.1"
 port = 3306
-user = "stock"
+user = "root"
 name = "stockdb"
 
 # 점수 산식 상수 (M0에서 시드 100종목의 점수 분포로 확정, 「점수 산식 상수 확정 기록」 참고)

@@ -17,6 +17,7 @@ class CollectorError(RuntimeError):
     """외부 데이터를 받지 못했거나 형식이 예상과 다를 때."""
 
 
+
 def load_fdr():
     """FinanceDataReader를 불러온다(설치되어 있지 않으면 안내 메시지와 함께 오류)."""
     try:

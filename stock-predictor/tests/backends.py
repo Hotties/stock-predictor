@@ -101,6 +101,7 @@ class FakeRepo:
         self.stocks: dict[str, FakeStock] = {}
         self._prices: dict[str, dict[date, dict]] = {}
         self._index: dict[str, dict[date, dict]] = {}
+        self.runs: list[dict] = []
 
     # stocks
     def upsert_stocks(self, session, rows):
@@ -168,6 +169,33 @@ class FakeRepo:
 
     def delete_prices(self, session, code):
         return len(self._prices.pop(code, {}))
+
+    # pipeline_runs
+    def start_run(self, session, job, now):
+        self.runs.append({"id": len(self.runs) + 1, "job": job, "started_at": now, "finished_at": None,
+                          "status": "running", "processed_rows": None, "message": None})
+        return self.runs[-1]["id"]
+
+    def finish_run(self, session, run_id, status, processed_rows=None, message=None, now=None):
+        if status not in ("success", "failed"):
+            raise ValueError(status)
+        r = self.runs[run_id - 1]
+        r.update(status=status, finished_at=now, processed_rows=processed_rows, message=message)
+
+    def is_running(self, session, job, now, stale_after):
+        return any(r["job"] == job and r["status"] == "running" and r["started_at"] > now - stale_after for r in self.runs)
+
+    def close_stale_runs(self, session, job, now, stale_after):
+        n = 0
+        for r in self.runs:
+            if r["job"] == job and r["status"] == "running" and r["started_at"] <= now - stale_after:
+                r.update(status="failed", finished_at=now, message="비정상 종료로 추정(오래된 running 기록)")
+                n += 1
+        return n
+
+    def get_last_success_run(self, session, job):
+        times = [r["started_at"] for r in self.runs if r["job"] == job and r["status"] == "success"]
+        return max(times) if times else None
 
     # index
     def upsert_index(self, session, symbol, df):

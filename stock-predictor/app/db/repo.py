@@ -249,3 +249,10 @@ def close_stale_runs(session: Session, job: str, now: datetime, stale_after: tim
         ).values(status="failed", finished_at=now, message="비정상 종료로 추정(오래된 running 기록)")
     )
     return result.rowcount
+
+
+def get_last_success_run(session: Session, job: str) -> datetime | None:
+    """job의 마지막 성공 실행 시작 시각. 하루 한 번만 하는 작업(종목 마스터 갱신, 백업)을 판단하는 데 쓴다."""
+    return session.scalar(
+        select(func.max(PipelineRun.started_at)).where(PipelineRun.job == job, PipelineRun.status == "success")
+    )
