@@ -1,6 +1,7 @@
 """종목 마스터 수집. 상장 종목, 상장일, ETF, 상장폐지 목록을 받아 하나로 합친다.
 
-시장 값 정리(M0 점검 결과): KOSDAQ GLOBAL은 KOSDAQ으로 합치고, KONEX 등은 시장을 비워 둔다(NaN이므로 pd.isna로 확인. 지원 제외 판정은 services/support.py).
+시장 값 정리(M0 점검 결과): KOSDAQ GLOBAL은 KOSDAQ으로 합치고, KONEX 등은 시장을 비워 둔다(NaN이므로 pd.isna로 확인.
+ 지원 제외 판정은 services/support.py).
 종류(kind): etf, spac, preferred(코드 끝자리가 0이 아님), common.
 ETF·상장일·상장폐지 목록은 보조 정보라 받지 못해도 경고만 남기고 계속한다.
 """

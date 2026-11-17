@@ -73,6 +73,7 @@ class PathSettings:
     extra_holidays: str = "config/extra_holidays.csv"
     backup_dir: str = "backup"
     backup_keep_days: int = 7
+    dump_command: str = ""   # mariadb-dump/mysqldump가 PATH에 없을 때 실행 파일 전체 경로를 쓴다(비우면 PATH에서 찾는다)
 
 
 @dataclass(frozen=True)

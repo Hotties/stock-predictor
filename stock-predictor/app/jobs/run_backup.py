@@ -59,9 +59,19 @@ def run_backup(ctx: JobContext, *, runner=subprocess.run, which=shutil.which) ->
     if target.exists():
         return BackupResult("skipped_exists", target, message="오늘 백업이 이미 있습니다")
 
-    binary = _find_dump_binary(which)
-    if binary is None:
-        return BackupResult("unavailable", message="mariadb-dump 또는 mysqldump를 찾을 수 없어 백업을 건너뜁니다")
+    configured = cfg.paths.dump_command.strip()
+    if configured:
+        binary = which(configured)
+        if binary is None:
+            return BackupResult("unavailable", message=f"설정한 dump_command를 찾을 수 없어 백업을 건너뜁니다: {configured}")
+    else:
+        binary = _find_dump_binary(which)
+        if binary is None:
+            return BackupResult(
+                "unavailable",
+                message="mariadb-dump 또는 mysqldump를 PATH에서 찾을 수 없어 백업을 건너뜁니다"
+                        "(settings.toml의 [paths] dump_command에 실행 파일 경로를 쓰면 됩니다)",
+            )
 
     cmd = [binary, f"--host={db.host}", f"--port={db.port}", f"--user={db.user}",
            "--single-transaction", "--routines", db.name]

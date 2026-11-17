@@ -60,6 +60,9 @@ def refresh_indexes(
     for sym in symbols:
         upper = base if sym in KR_INDEX_SYMBOLS else calendar.latest_us_session_confirmed(now)
         last = db.get_last_index_date(session, sym)
+        if last is not None and last >= upper:
+            reports.append(IndexRefreshReport(sym, 0, last))     # 이미 최신이라 받지 않는다
+            continue
         if last is None:
             start = calendar.start_date_for_history(base, settings.history.load_trading_days)
         else:
@@ -121,8 +124,10 @@ def refresh_stock(
     full = last is None
     adjusted = False
     fetched = None
+    # 이미 기준일까지 받았으면 다시 받지 않는다. 수정주가 변경은 다음 거래일에 새 행을 받을 때 겹친 구간으로 확인된다.
+    up_to_date = (not full) and last >= base
 
-    if not full:
+    if not full and not up_to_date:
         start = last - timedelta(days=PRICE_OVERLAP_DAYS)
         fetched = trim_to_base_date(
             fetch_daily_prices(code, start, fdr=fdr, settings=settings.collector, sleep=sleep), base
@@ -134,7 +139,9 @@ def refresh_stock(
                 adjusted = full = True
                 warnings.append(f"겹치는 날짜의 종가가 DB와 달라 전체 재적재합니다(액면분할·배당 추정): {_fmt(diff, 3)}")
 
-    if full:
+    if up_to_date:
+        written, new_last = 0, last
+    elif full:
         if adjusted:
             db.delete_prices(session, code)
         fetched = trim_to_base_date(

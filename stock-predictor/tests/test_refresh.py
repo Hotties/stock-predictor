@@ -110,6 +110,15 @@ class StockRefreshCases:
         again = self.refresh(now2, fdr)                                  # 새 데이터가 없으면 아무것도 쓰지 않는다
         self.assertEqual((again.rows_written, again.last_loaded_date), (0, date(2026, 11, 5)))
 
+    def test_up_to_date_stock_is_not_fetched_again(self):
+        days, _ = self.load_initial()
+        fdr2 = RangeFakeFdr(prices={CODE: price_df(days)})
+        rep = self.refresh(dt(2026, 11, 4, 17, 0), fdr2)                  # 같은 기준일에 다시 실행
+        self.assertEqual(fdr2.calls, [])                                   # 네트워크를 쓰지 않는다
+        self.assertEqual((rep.rows_written, rep.full_reload), (0, False))
+        self.assertTrue(rep.decision.supported)                            # 지원 판정은 DB의 일봉으로 계속 한다
+        self.assertEqual(self.stock().last_loaded_date, date(2026, 11, 4))
+
     def test_split_triggers_full_reload(self):
         days, fdr = self.load_initial()
         now2 = dt(2026, 11, 5, 17, 0)
@@ -270,6 +279,14 @@ class IndexRefreshCases:
         self.run_indexes(self.now2, fdr)                                              # 다시 실행해도 결과가 같다(멱등)
         with self.be.scope() as s:
             self.assertEqual(self.db.get_index(s, "KOSPI")["close"].tolist(), before)
+
+    def test_up_to_date_indexes_are_not_fetched_again(self):
+        self.run_indexes(self.now1, self.fdr())
+        fdr2 = self.fdr()
+        reps = self.run_indexes(self.now1, fdr2)                          # 같은 시각에 다시 실행
+        self.assertEqual(fdr2.calls, [])
+        self.assertEqual({k: r.rows_written for k, r in reps.items()}, {"KOSPI": 0, "KOSDAQ": 0, "US500": 0})
+        self.assertEqual(reps["KOSPI"].last_date, date(2026, 11, 3))
 
     def test_calendar_mismatch_warnings(self):
         missing = [d for d in self.kr if d != date(2026, 10, 28)] + [date(2026, 10, 31)]   # 거래일 하나 빠지고 토요일이 하나 있음

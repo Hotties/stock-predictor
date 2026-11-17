@@ -103,10 +103,13 @@ class JobCases:
         self.assertEqual(self.stock("005930").last_loaded_date, BASE2)
         self.assertIsNotNone(self.last_success("refresh"))
         self.assertIsNotNone(self.last_success("master"))
-        again = run_refresh(self.ctx(make_fdr()), backup_fn=None)          # 같은 날 다시 실행
+        fdr_again = make_fdr()
+        again = run_refresh(self.ctx(fdr_again), backup_fn=None)           # 같은 날 다시 실행
         self.assertEqual(again.status, "success")
         self.assertFalse(again.master_synced)                              # 마스터는 하루 한 번
         self.assertEqual(again.stocks_ok, 2)
+        self.assertEqual(again.rows_written, 0)                            # 새 데이터가 없으면 아무것도 쓰지 않는다
+        self.assertEqual(data_symbols(fdr_again), set())                   # 네트워크도 쓰지 않는다(두 번째 실행은 빠르다)
 
     def test_skips_when_already_running_and_closes_stale(self):
         self.initial_state()
@@ -369,6 +372,19 @@ class BackupTest(unittest.TestCase):
         self.assertEqual(res.status, "failed")
         self.assertIn("access denied", res.message)
         self.assertEqual(list(self.dir.iterdir()), [])
+
+    def test_configured_dump_command_is_used(self):
+        self.ctx.settings = replace(self.settings, paths=replace(self.settings.paths, dump_command="C:/db/bin/mariadb-dump.exe"))
+        res = run_backup(self.ctx, runner=self.runner_ok, which=lambda n: n if n == "C:/db/bin/mariadb-dump.exe" else None)
+        self.assertEqual(res.status, "created")
+        self.assertEqual(self.calls[0][0][0], "C:/db/bin/mariadb-dump.exe")
+
+    def test_configured_dump_command_missing_does_not_fall_back(self):
+        self.ctx.settings = replace(self.settings, paths=replace(self.settings.paths, dump_command="C:/nope/dump.exe"))
+        res = run_backup(self.ctx, runner=self.runner_ok, which=lambda n: "/usr/bin/mysqldump" if n == "mysqldump" else None)
+        self.assertEqual(res.status, "unavailable")
+        self.assertIn("dump_command", res.message)
+        self.assertEqual(self.calls, [])
 
     def test_unavailable_when_no_dump_command(self):
         res = run_backup(self.ctx, runner=self.runner_ok, which=lambda n: None)

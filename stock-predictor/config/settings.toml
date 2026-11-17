@@ -38,6 +38,8 @@ kosdaq_count = 30
 extra_holidays = "config/extra_holidays.csv"
 backup_dir = "backup"
 backup_keep_days = 7
+# mariadb-dump 또는 mysqldump가 PATH에 없으면 실행 파일의 전체 경로를 쓴다(작은따옴표로 감싸면 \를 그대로 쓸 수 있다).
+dump_command = 'C:\Program Files\MariaDB 11.8\bin\mariadb-dump.exe'
 
 [runtime]
 stale_run_hours = 6        # 이 시간이 지나도록 running이면 비정상 종료로 본다
